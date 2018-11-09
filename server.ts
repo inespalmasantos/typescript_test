@@ -56,13 +56,12 @@ db.result('SELECT * FROM information_schema.tables WHERE table_name = $1', ['git
   .then(() => request({
     uri: 'https://api.github.com/users/gaearon',
     headers: {
-          'User-Agent': 'Request-Promise'
-      },
+      'User-Agent': 'Request-Promise'
+    },
     json: true
   }))
-  .then((data: GithubUsers) => db.one(
-    'INSERT INTO github_users (login) VALUES ($[login]) RETURNING id', data)
-  ).then(({id}) => console.log(id))
+  .then((data: GithubUsers) => db.one('INSERT INTO github_users (login) VALUES ($[login]) RETURNING id', data))
+  .then(({id}) => console.log(id))
   .then(() => process.exit(0));
 
 
