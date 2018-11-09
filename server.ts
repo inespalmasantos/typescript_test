@@ -49,6 +49,7 @@ const db = pgp(options);
  
 db.result('SELECT * FROM information_schema.tables WHERE table_name = $1', ['github_users'])
   .then(result => {
+    // Create table github_users if it does not exist
     if (result.rowCount != 1) {
       db.none('CREATE TABLE github_users (id BIGSERIAL, login TEXT, name TEXT, company TEXT)')
     };
