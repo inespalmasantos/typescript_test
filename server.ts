@@ -46,24 +46,28 @@ interface GithubUsers
 const pgp = pgPromise(pgpDefaultConfig);
 const db = pgp(options);
 
- 
+// Read command line arguments with user fields
+const login = process.argv.slice(2)
+const u_name = process.argv.slice(3)
+const company = process.argv.slice(4)
+const position = process.argv.slice(5)
+const u_location = process.argv.slice(6)
+
+
 db.result('SELECT * FROM information_schema.tables WHERE table_name = $1', ['github_users'])
   .then(result => {
     // Create table github_users if it does not exist
     if (result.rowCount != 1) {
-      db.none('CREATE TABLE github_users (id BIGSERIAL, login TEXT, name TEXT, company TEXT)')
+      return db.none('CREATE TABLE github_users (id BIGSERIAL, login TEXT, name TEXT, company TEXT, position TEXT, location TEXT)')
     };
   })
-  .then(() => request({
-    uri: 'https://api.github.com/users/gaearon',
-    headers: {
-      'User-Agent': 'Request-Promise'
-    },
-    json: true
-  }))
-  .then((data: GithubUsers) => db.one('INSERT INTO github_users (login) VALUES ($[login]) RETURNING id', data))
+  .then(() => db.one('INSERT INTO github_users (login, name, company, position, location) VALUES ($1, $2, $3, $4, $5) RETURNING id', [login[0], u_name[0], company[0], position[0], u_location[0]]))
   .then(({id}) => console.log(id))
   .then(() => process.exit(0));
+
+
+
+
 
 
 
