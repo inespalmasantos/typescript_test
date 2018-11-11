@@ -53,7 +53,6 @@ const company = process.argv.slice(4)
 const position = process.argv.slice(5)
 const u_location = process.argv.slice(6)
 
-
 db.result('SELECT * FROM information_schema.tables WHERE table_name = $1', ['github_users'])
   .then(result => {
     // Create table github_users if it does not exist
@@ -61,14 +60,20 @@ db.result('SELECT * FROM information_schema.tables WHERE table_name = $1', ['git
       return db.none('CREATE TABLE github_users (id BIGSERIAL, login TEXT, name TEXT, company TEXT, position TEXT, location TEXT)')
     };
   })
-  .then(() => db.one('INSERT INTO github_users (login, name, company, position, location) VALUES ($1, $2, $3, $4, $5) RETURNING id', [login[0], u_name[0], company[0], position[0], u_location[0]]))
-  .then(({id}) => console.log(id))
-  .then(() => process.exit(0));
-
-
-
-
-
-
-
+  .then(() => {
+    return db.result('SELECT * FROM github_users WHERE login = $1', [login[0]])
+    .then((result) => {
+      // Check if user exists
+      if (result.rowCount == 1) {
+        console.log('User already exists');
+        process.exit(0);
+      // Add new user if it does not exist
+      } else {
+        db.one('INSERT INTO github_users (login, name, company, position, location) VALUES ($1, $2, $3, $4, $5) RETURNING id', [login[0], u_name[0], company[0], position[0], u_location[0]])
+        .then(({id}) => console.log(id))
+        .then(() => process.exit(0));
+      }
+    });
+  })
+  
 
