@@ -54,6 +54,7 @@ const company = process.argv.slice(5)
 const position = process.argv.slice(6)
 const u_location = process.argv.slice(7)
 
+
 // Add new user
 if (cmd_line_option[0] == 'new_user') {
   // Check if table github_users exists / if not, create table
@@ -110,20 +111,42 @@ if (cmd_line_option[0] == 'new_user') {
   
 // Show stats for how many users per location
 } else if (cmd_line_option[0] == 'location_stats') {
-  console.log('Functionality under development.');
-  process.exit(0);
+  // Check if table github_users exist / if yes, show stats
+  db.result('SELECT * FROM information_schema.tables WHERE table_name = $1', ['github_users'])
+  .then(result => {
+    if (result.rowCount != 1) {
+      console.log('There are no github users registered.');
+      process.exit(0);
+    } else {
+      const stats = {};
+      db.result('SELECT DISTINCT location FROM github_users')
+      .then(result => {
+        for (let i = 0; i < result.rowCount; i++) {
+          db.result('SELECT * FROM github_users WHERE location = $1', [result.rows[i].location])
+            .then(data => {
+              return stats[result.rows[i].location] = data.rowCount;
+             })
+            .then(() => {
+              if (i == result.rowCount - 1) {
+                console.log('Number of github users per location:');
+                Object.keys(stats).forEach(key => {
+                  console.log(key + ': ' + stats[key]);     
+                });
+                process.exit(0);
+              }
+            })
+        }
+      })
+    }  
+  })
 
 // Command line options
 } else {
   console.log('Enter a valid command. Command options are: new_user, users_lx or location_stats.' + '\n' +
     'To add a new user enter the following user information: login, name, company, company position and location.' + '\n' +
     'Examples of command options:' + '\n' + 
-    '    new_user jc "Joao Cristóvão" "Lovely Stay" "CTO and Founder" Lisbon' + '\n' +
+    '    new_user jcristovao "Joao Cristóvão" "Lovely Stay" "CTO and Founder" Lisbon' + '\n' +
     '    users_lx' + '\n' +
     '    location_stats');
   process.exit(0);
 }
-
-
-  
-
