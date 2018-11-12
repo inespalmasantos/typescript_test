@@ -54,30 +54,38 @@ const company = process.argv.slice(5)
 const position = process.argv.slice(6)
 const u_location = process.argv.slice(7)
 
-
 // Add new user
 if (cmd_line_option[0] == 'new_user') {
-  // Check if table github_users exists / if not, create table
-  db.result('SELECT * FROM information_schema.tables WHERE table_name = $1', ['github_users'])
-  .then(result => {
-    if (result.rowCount != 1) {
-      return db.none('CREATE TABLE github_users (id BIGSERIAL, login TEXT, name TEXT, company TEXT, position TEXT, location TEXT)')
-    };
-  })
-  // Check if user exists / if not, add user
-  .then(() => {
-    return db.result('SELECT * FROM github_users WHERE login = $1', [login[0]])
-    .then((result) => {
-      if (result.rowCount == 1) {
-        console.log('User already exists.');
-        process.exit(0);
-      } else {
-        db.one('INSERT INTO github_users (login, name, company, position, location) VALUES ($1, $2, $3, $4, $5) RETURNING id', [login[0], u_name[0], company[0], position[0], u_location[0]])
-        .then(({id}) => console.log(id))
-        .then(() => process.exit(0));
-      }
-    });
-  })
+  // Check if new user information format is valid
+  if (process.argv.length != 8) {
+    console.log('New user information does not have a valid format.' + '\n' +
+                'To add a new user enter the following user information: login, name, company, company position and location.' + '\n' +
+                'Example: new_user jcristovao "Joao Cristóvão" "Lovely Stay" "CTO and Founder" Lisbon');
+    process.exit(0);
+  } else {
+    // Check if table github_users exists / if not, create table
+    db.result('SELECT * FROM information_schema.tables WHERE table_name = $1', ['github_users'])
+    .then(result => {
+      if (result.rowCount != 1) {
+        return db.none('CREATE TABLE github_users (id BIGSERIAL, login TEXT, name TEXT, company TEXT, position TEXT, location TEXT)')
+      };
+    })
+    // Check if user exists / if not, add user
+    .then(() => {
+      return db.result('SELECT * FROM github_users WHERE login = $1', [login[0]])
+      .then((result) => {
+        if (result.rowCount == 1) {
+          console.log('User already exists.');
+          process.exit(0);
+        } else {
+          db.one('INSERT INTO github_users (login, name, company, position, location) VALUES ($1, $2, $3, $4, $5) RETURNING id', [login[0], u_name[0], company[0], position[0], u_location[0]])
+          .then(({id}) => console.log(id))
+          .then(() => process.exit(0));
+        }
+      });
+     })
+    }
+  
   
 // List all the users registered in Lisbon
 } else if (cmd_line_option[0] == 'users_lx'){
